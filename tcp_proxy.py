@@ -36,4 +36,9 @@ def recieve_from(connection):
     except Exception as e:
         pass
     return buffer
-            
+
+def request_handler(buffer):
+    return buffer
+
+def response_handler(buffer):
+    return buffer
