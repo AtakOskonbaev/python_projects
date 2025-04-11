@@ -26,7 +26,7 @@ def hexdump(src, length=16, show=True):
 
 def recieve_from(connection):
     buffer = b''
-    connection.setTimeout(5)
+    connection.settimeout(5)
     try:
         while True:
             data = connection.recv(4096)
@@ -47,11 +47,13 @@ def proxy_handler(client_socket, remote_host, remote_port, recieve_first):
     remote_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     remote_socket.connect((remote_host, remote_port))
     
+    remote_buffer = b''
     if recieve_first:
         remote_buffer = recieve_from(remote_socket)
-        hexdump(remote_buffer)
-        
-    remote_buffer = response_handler(remote_buffer)
+        if remote_buffer:
+            hexdump(remote_buffer)
+            remote_buffer = response_handler(remote_buffer)
+            
     if len(remote_buffer):
         print("[<==] Sending %d bytes to localhost." % len(remote_buffer))
         client_socket.send(remote_buffer)
@@ -76,7 +78,7 @@ def proxy_handler(client_socket, remote_host, remote_port, recieve_first):
             remote_socket.send(remote_buffer)
             print("[<==] Sent to localhost.")
             
-        if not len(local_buffer) or not len(remote_buffer):
+        if not len(local_buffer) and not len(remote_buffer):
             client_socket.close()
             remote_socket.close()
             print("[*] No more data. Closing connections.")
@@ -96,8 +98,9 @@ def server_loop(local_host, local_port,
     print("[*] Listening on %s:%d" % (local_host, local_port))
     server.listen(5)
     while True:
-        client_socket, addr = client_socket.accept()
+        client_socket, addr = server.accept()
         line = "> Recieved incoming connection from %s:%d" % (addr[0], addr[1])
+        print(line)
         proxy_thread = threading.Thread(target=proxy_handler, args=(client_socket, remote_host, remote_port, recieve_first))
         proxy_thread.start()
         
