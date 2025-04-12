@@ -24,7 +24,7 @@ def hexdump(src, length=16, show=True):
     else:
         return results
 
-def recieve_from(connection):
+def receive_from(connection):
     buffer = b''
     connection.settimeout(5)
     try:
@@ -43,13 +43,13 @@ def request_handler(buffer):
 def response_handler(buffer):
     return buffer
 
-def proxy_handler(client_socket, remote_host, remote_port, recieve_first):
+def proxy_handler(client_socket, remote_host, remote_port, receive_first):
     remote_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     remote_socket.connect((remote_host, remote_port))
     
     remote_buffer = b''
-    if recieve_first:
-        remote_buffer = recieve_from(remote_socket)
+    if receive_first:
+        remote_buffer = receive_from(remote_socket)
         if remote_buffer:
             hexdump(remote_buffer)
             remote_buffer = response_handler(remote_buffer)
@@ -59,9 +59,9 @@ def proxy_handler(client_socket, remote_host, remote_port, recieve_first):
         client_socket.send(remote_buffer)
         
     while True:
-        local_buffer = recieve_from(client_socket)
+        local_buffer = receive_from(client_socket)
         if len(local_buffer):
-            line = "[==>] Recieved %d bytes from localhost." % len(local_buffer)
+            line = "[==>] received %d bytes from localhost." % len(local_buffer)
             print(line)
             hexdump(local_buffer)
             
@@ -69,9 +69,9 @@ def proxy_handler(client_socket, remote_host, remote_port, recieve_first):
             remote_socket.send(local_buffer)
             print("[<==] Sent to remote.")
             
-        remote_buffer = recieve_from(remote_socket)
+        remote_buffer = receive_from(remote_socket)
         if len(remote_buffer):
-            print("[==>] Recieved %d bytes from remote." % len(remote_buffer))
+            print("[==>] received %d bytes from remote." % len(remote_buffer))
             hexdump(remote_buffer)
             
             remote_buffer = request_handler(remote_buffer)
@@ -85,7 +85,7 @@ def proxy_handler(client_socket, remote_host, remote_port, recieve_first):
             break
         
 def server_loop(local_host, local_port,
-                remote_host, remote_port, recieve_first):
+                remote_host, remote_port, receive_first):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         server.bind((local_host, local_port))
@@ -99,9 +99,9 @@ def server_loop(local_host, local_port,
     server.listen(5)
     while True:
         client_socket, addr = server.accept()
-        line = "> Recieved incoming connection from %s:%d" % (addr[0], addr[1])
+        line = "> received incoming connection from %s:%d" % (addr[0], addr[1])
         print(line)
-        proxy_thread = threading.Thread(target=proxy_handler, args=(client_socket, remote_host, remote_port, recieve_first))
+        proxy_thread = threading.Thread(target=proxy_handler, args=(client_socket, remote_host, remote_port, receive_first))
         proxy_thread.start()
         
 def main():
@@ -115,13 +115,13 @@ def main():
     remote_host = sys.argv[3]
     remote_port = int(sys.argv[4])
     
-    recieve_first = sys.argv[5]
-    if "True" in recieve_first:
-        recieve_first = True
+    receive_first = sys.argv[5]
+    if "True" in receive_first:
+        receive_first = True
     else:
-        recieve_first = False
+        receive_first = False
         
-    server_loop(local_host, local_port, remote_host, remote_port, recieve_first)
+    server_loop(local_host, local_port, remote_host, remote_port, receive_first)
     
 if __name__ == '__main__':
     main()
