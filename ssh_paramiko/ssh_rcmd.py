@@ -5,7 +5,7 @@ import subprocess
 def ssh_commmand(ip, port, user, passwd, command):
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
-    client.connect(ip, port=port, username=user, password=passwd)
+    client.connect(ip, port=port, username=user, password=passwd, timeout=10)
     
     ssh_session = client.get_transport().open_session()
     if ssh_session.active:
@@ -22,16 +22,16 @@ def ssh_commmand(ip, port, user, passwd, command):
             ssh_session.send(cmd_output or 'okay')
         except Exception as e:
             ssh_session.send(str(e))
-        client.close()
+            client.close()
     return 
 
 if __name__ == '__main__':
     import getpass
     
-    user = getpass.getuser()
+    user = input('Enter username: ')
     password = getpass.getpass()
     
     ip = input('Enter server IP: ')
     port = input('Enter port: ')
-    ssh_commmand(ip, user, port, password, 'ClientConnected')
+    ssh_commmand(ip, port, user, password, 'ClientConnected')
     
